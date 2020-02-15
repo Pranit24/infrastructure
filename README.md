@@ -32,17 +32,22 @@ aws cloudformation create-stack \
 ```
 
 - Subnets\
+
   The subnets addresses should be within the VPC address \
   Example
 ```
 10.0.0.0 to 10.0.255.255
 ```
+
  - PublicSubnet1CIDR\
    IP range (CIDR notation) for the public subnet in the first  Availability Zone
+ 
  - PublicSubnet2CIDR\
    IP range (CIDR notation) for the public subnet in the sceond  Availability Zone
+ 
  - PublicSubnet3CIDR\
    IP range (CIDR notation) for the public subnet in the third
+ 
  - AvailabilityZones \
    Comma delimited list of availability zones. MAX 3
 
