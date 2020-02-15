@@ -20,41 +20,39 @@ aws cloudformation create-stack \
 
 ## Parameters
 
-- EnvironmentName
+- EnvironmentName \
   Environment name that is prefixed to resource names
 
-- VpcCIDR
-  IP range(CIDR notation) for this VPC
+- VpcCIDR \
+  IP range(CIDR notation) for this VPC  
   Example
 
 ```
 10.0.0.0/16
 ```
 
-- Subnets
-  The subnets addresses should be within the VPC address
+- Subnets\
+
+  The subnets addresses should be within the VPC address \
   Example
 
 ```
 10.0.0.0 to 10.0.255.255
 ```
 
-    - PublicSubnet1CIDR
-    IP range (CIDR notation) for the public subnet in the first Availability Zone
+- PublicSubnet1CIDR\
+  IP range (CIDR notation) for the public subnet in the first Availability Zone
 
-    - PublicSubnet2CIDR
-    IP range (CIDR notation) for the public subnet in the sceond Availability Zone
+- PublicSubnet2CIDR\
+  IP range (CIDR notation) for the public subnet in the sceond Availability Zone
 
-    - PublicSubnet3CIDR
-    IP range (CIDR notation) for the public subnet in the third Availability Zone
+- PublicSubnet3CIDR\
+  IP range (CIDR notation) for the public subnet in the third
 
-    - AvailabilityZones
-    Environment name that is prefixed to resource names
-
-- AvailabilityZones
+- AvailabilityZones \
   Comma delimited list of availability zones. MAX 3
 
-JSON file
+JSON file for parameters
 
 ```javascript
 [
