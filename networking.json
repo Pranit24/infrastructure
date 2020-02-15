@@ -1,0 +1,233 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Sample Template vpc_single_instance_in_subnet.template: Sample template showing how to create a VPC and add an EC2 instance with an Elastic IP address and a security group. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Parameters": {
+    "EnvironmentName": {
+      "Type": "String",
+      "Description": "Enter an environment name that is prefixed to resource names"
+    },
+    "VpcCIDR": {
+      "Description": "Enter the IP range(CIDR notation) for this VPC",
+      "Type": "String"
+    },
+    "PublicSubnet1CIDR": {
+      "Description": "Enter the IP range (CIDR notation) for the public subnet in the first Availability Zone",
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "PublicSubnet2CIDR": {
+      "Description": "Enter the IP range (CIDR notation) for the public subnet in the second Availability Zone",
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "PublicSubnet3CIDR": {
+      "Description": "Enter the IP range (CIDR notation) for the public subnet in the third Availability Zone",
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "AvailabilityZones": {
+      "Type": "List<AWS::EC2::AvailabilityZone::Name>",
+      "Description": "Comma delimited list of availability zones. MAX 3"
+    }
+  },
+  "Resources": {
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VpcCIDR"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "EnvironmentName"
+            }
+          }
+        ]
+      }
+    },
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "AvailabilityZone": {
+          "Fn::Select": ["0", { "Ref": "AvailabilityZones" }]
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnet1CIDR"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "$EnvironmentName Public Subnet 1 (AZ1)"
+            }
+          }
+        ]
+      }
+    },
+    "PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "AvailabilityZone": {
+          "Fn::Select": ["1", { "Ref": "AvailabilityZones" }]
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnet2CIDR"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "$EnvironmentName Public Subnet 2 (AZ2)"
+            }
+          }
+        ]
+      }
+    },
+    "PublicSubnet3": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnet3CIDR"
+        },
+        "AvailabilityZone": {
+          "Fn::Select": ["2", { "Ref": "AvailabilityZones" }]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "$EnvironmentName Public Subnet 1 (AZ3)"
+            }
+          }
+        ]
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "EnvironmentName"
+            }
+          }
+        ]
+      }
+    },
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "RouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "$EnvironmentName Public Routes"
+            }
+          }
+        ]
+      }
+    },
+    "Route": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "PublicSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet1"
+        }
+      }
+    },
+    "PublicSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet2"
+        }
+      }
+    },
+    "PublicSubnet3RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet3"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "VPC": {
+      "Description": "A reference to the created VPC",
+      "Value": {
+        "Ref": "VPC"
+      }
+    },
+    "Subnets": {
+      "Description": "A List of public subnets",
+      "Value": {
+        "Fn::Join": [
+          ",",
+          [
+            {
+              "Ref": "PublicSubnet1"
+            },
+            {
+              "Ref": "PublicSubnet2"
+            },
+            {
+              "Ref": "PublicSubnet3"
+            }
+          ]
+        ]
+      }
+    }
+  }
+}
