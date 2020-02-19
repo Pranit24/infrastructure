@@ -73,7 +73,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Sub": "$EnvironmentName Public Subnet 1 (AZ1)"
+              "Fn::Sub": "${EnvironmentName} Public Subnet 1 (AZ1)"
             }
           }
         ]
@@ -102,7 +102,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Sub": "$EnvironmentName Public Subnet 2 (AZ2)"
+              "Fn::Sub": "${EnvironmentName} Public Subnet 2 (AZ2)"
             }
           }
         ]
@@ -131,7 +131,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Sub": "$EnvironmentName Public Subnet 1 (AZ3)"
+              "Fn::Sub": "${EnvironmentName} Public Subnet 1 (AZ3)"
             }
           }
         ]
@@ -171,7 +171,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Sub": "$EnvironmentName Public Routes"
+              "Fn::Sub": "${EnvironmentName} Public Routes"
             }
           }
         ]
