@@ -388,7 +388,7 @@
         "DBSubnetGroupName": {
           "Ref": "DbSubnetGroup"
         },
-        "PubliclyAccessible": "true",
+        "PubliclyAccessible": "false",
         "VPCSecurityGroups": [
           {
             "Ref": "DatabaseSecurityGroup"
@@ -466,9 +466,15 @@
                 },
                 "\"', >> config.json\n",
                 "echo '\"dialect\"': '\"",
-                { "Ref": "Engine" },
+                "mysql",
                 "\"'} >> config.json\n",
-                "echo } >> config.json\n"
+                "echo } >> config.json\n",
+                "touch s3_bucket.json\n",
+                "echo { '\"s3_bucket_name\"': '\"",
+                {
+                  "Ref": "S3Bucket"
+                },
+                "\"'} >> s3_bucket.json"
               ]
             ]
           }
