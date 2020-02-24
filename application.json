@@ -1,0 +1,539 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation VPC and add an EC2 instance with an Elastic IP address and a security group.",
+  "Parameters": {
+    "EnvironmentName": {
+      "Type": "String",
+      "Description": "Enter an environment name that is prefixed to resource names"
+    },
+    "VpcCIDR": {
+      "Description": "Enter the IP range(CIDR notation) for this VPC",
+      "Type": "String"
+    },
+    "PublicSubnet1CIDR": {
+      "Description": "Enter the IP range (CIDR notation) for the public subnet in the first Availability Zone",
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "PublicSubnet2CIDR": {
+      "Description": "Enter the IP range (CIDR notation) for the public subnet in the second Availability Zone",
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "PublicSubnet3CIDR": {
+      "Description": "Enter the IP range (CIDR notation) for the public subnet in the third Availability Zone",
+      "Type": "String",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "AWSRegion": {
+      "Type": "String",
+      "Description": "AWS region"
+    },
+    "DBName": {
+      "Type": "String",
+      "Description": "Name of database to be created when DB instance is created",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters."
+    },
+    "DBIdentifier": {
+      "Type": "String",
+      "Description": "My database instance",
+      "MinLength": "1",
+      "MaxLength": "63"
+    },
+    "DBInstanceClass": {
+      "Default": "db.t3.micro",
+      "Description": "DB instance class",
+      "Type": "String",
+      "ConstraintDescription": "Must select a valid DB instance type."
+    },
+    "DBUsername": {
+      "NoEcho": "true",
+      "Description": "Username for MySQL database access",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "16",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
+    },
+    "DBPassword": {
+      "NoEcho": "true",
+      "Description": "Password MySQL database access",
+      "Type": "String",
+      "MinLength": "8",
+      "MaxLength": "41"
+    },
+    "Engine": {
+      "Type": "String",
+      "Default": "MySQL",
+      "Description": "Type of database instance"
+    },
+    "EngineVersion": {
+      "Type": "String",
+      "Default": "8.0.16",
+      "Description": "Type of database instance"
+    },
+    "DBAllocatedStorage": {
+      "Default": "8",
+      "Description": "The size of the database (GiB)",
+      "Type": "Number",
+      "MinValue": "5",
+      "MaxValue": "1024",
+
+      "ConstraintDescription": "must be between 20 and 65536 GiB."
+    },
+    "InstanceType": {
+      "Type": "String",
+      "Default": "t2.micro",
+      "Description": "Type of ec2 instance"
+    },
+    "AWSKeyName": {
+      "Type": "String",
+      "Description": "Key name for EC2 Instance"
+    },
+    "AmiId": {
+      "Type": "String",
+      "Description": "AMI Id"
+    }
+  },
+  "Resources": {
+    "VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": {
+          "Ref": "VpcCIDR"
+        },
+        "EnableDnsHostnames": "true",
+        "EnableDnsSupport": "true",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "EnvironmentName"
+            }
+          }
+        ]
+      }
+    },
+    "PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "0",
+            {
+              "Fn::GetAZs": {
+                "Ref": "AWSRegion"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnet1CIDR"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${EnvironmentName} Public Subnet 1 (AZ1)"
+            }
+          }
+        ]
+      }
+    },
+    "PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "1",
+            {
+              "Fn::GetAZs": {
+                "Ref": "AWSRegion"
+              }
+            }
+          ]
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnet2CIDR"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${EnvironmentName} Public Subnet 2 (AZ2)"
+            }
+          }
+        ]
+      }
+    },
+    "PublicSubnet3": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "CidrBlock": {
+          "Ref": "PublicSubnet3CIDR"
+        },
+        "AvailabilityZone": {
+          "Fn::Select": [
+            "2",
+            {
+              "Fn::GetAZs": {
+                "Ref": "AWSRegion"
+              }
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${EnvironmentName} Public Subnet 1 (AZ3)"
+            }
+          }
+        ]
+      }
+    },
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "EnvironmentName"
+            }
+          }
+        ]
+      }
+    },
+    "AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "RouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Sub": "${EnvironmentName} Public Routes"
+            }
+          }
+        ]
+      }
+    },
+    "Route": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "AttachGateway",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "InternetGateway"
+        }
+      }
+    },
+    "PublicSubnet1RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet1"
+        }
+      }
+    },
+    "PublicSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet2"
+        }
+      }
+    },
+    "PublicSubnet3RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "RouteTable"
+        },
+        "SubnetId": {
+          "Ref": "PublicSubnet3"
+        }
+      }
+    },
+    "ApplicationSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow http to client host",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 80,
+            "ToPort": 80,
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 22,
+            "ToPort": 22,
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 3000,
+            "ToPort": 3000,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "DatabaseSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allow http to client RDS",
+        "VpcId": { "Ref": "VPC" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 3306,
+            "ToPort": 3306,
+            "SourceSecurityGroupId": {
+              "Ref": "ApplicationSecurityGroup"
+            }
+          }
+        ]
+      }
+    },
+    "DbSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Db subnet group from public subnet 1 and 2",
+        "SubnetIds": [
+          {
+            "Ref": "PublicSubnet1"
+          },
+          {
+            "Ref": "PublicSubnet2"
+          }
+        ]
+      }
+    },
+    "RDSDb": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceIdentifier": {
+          "Ref": "DBIdentifier"
+        },
+        "DBName": {
+          "Ref": "DBName"
+        },
+        "DBInstanceClass": {
+          "Ref": "DBInstanceClass"
+        },
+        "Engine": {
+          "Ref": "Engine"
+        },
+        "EngineVersion": {
+          "Ref": "EngineVersion"
+        },
+        "MasterUsername": {
+          "Ref": "DBUsername"
+        },
+        "MasterUserPassword": {
+          "Ref": "DBPassword"
+        },
+        "AllocatedStorage": {
+          "Ref": "DBAllocatedStorage"
+        },
+        "MultiAZ": "false",
+        "DBSubnetGroupName": {
+          "Ref": "DbSubnetGroup"
+        },
+        "PubliclyAccessible": "false",
+        "VPCSecurityGroups": [
+          {
+            "Ref": "DatabaseSecurityGroup"
+          }
+        ]
+      }
+    },
+    "EC2S3Role": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": ["EC2-CSYE6225"]
+      }
+    },
+    "EC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": "RDSDb",
+      "Properties": {
+        "ImageId": {
+          "Ref": "AmiId"
+        },
+        "KeyName": {
+          "Ref": "AWSKeyName"
+        },
+        "DisableApiTermination": "false",
+        "NetworkInterfaces": [
+          {
+            "SubnetId": { "Ref": "PublicSubnet1" },
+            "AssociatePublicIpAddress": "true",
+            "DeviceIndex": "0",
+            "GroupSet": [{ "Ref": "ApplicationSecurityGroup" }]
+          }
+        ],
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sdm",
+            "Ebs": {
+              "VolumeType": "gp2",
+              "DeleteOnTermination": "true",
+              "VolumeSize": "20"
+            }
+          },
+          {
+            "DeviceName": "/dev/sdk",
+            "NoDevice": {}
+          }
+        ],
+        "IamInstanceProfile": { "Ref": "EC2S3Role" },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "cd /home/ubuntu\n",
+                "mkdir config && cd config",
+                "touch config.json\n",
+                "echo { >> config.json\n",
+                "echo '\"development\"': { >> config.json\n",
+                "echo '\"username\"': '\"",
+                { "Ref": "DBUsername" },
+                "\"', >> config.json\n",
+                "echo '\"password\"': '\"",
+                { "Ref": "DBPassword" },
+                "\"', >> config.json\n",
+                "echo '\"database\"': '\"",
+                { "Ref": "DBName" },
+                "\"', >> config.json\n",
+                "echo '\"host\"': '\"",
+                {
+                  "Fn::GetAtt": ["RDSDb", "Endpoint.Address"]
+                },
+                "\"', >> config.json\n",
+                "echo '\"dialect\"': '\"",
+                "mysql",
+                "\"'} >> config.json\n",
+                "echo } >> config.json\n",
+                "touch s3_bucket.json\n",
+                "echo { '\"s3_bucket_name\"': '\"",
+                {
+                  "Ref": "S3Bucket"
+                },
+                "\"'} >> s3_bucket.json"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "IAAfter30Days",
+              "Status": "Enabled",
+              "Transition": {
+                "StorageClass": "STANDARD_IA",
+                "TransitionInDays": 30
+              }
+            }
+          ]
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      },
+      "DeletionPolicy": "Retain"
+    }
+  },
+  "Outputs": {
+    "VPC": {
+      "Description": "A reference to the created VPC",
+      "Value": {
+        "Ref": "VPC"
+      }
+    },
+    "Subnets": {
+      "Description": "A List of public subnets",
+      "Value": {
+        "Fn::Join": [
+          ",",
+          [
+            {
+              "Ref": "PublicSubnet1"
+            },
+            {
+              "Ref": "PublicSubnet2"
+            },
+            {
+              "Ref": "PublicSubnet3"
+            }
+          ]
+        ]
+      }
+    }
+  }
+}
