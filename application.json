@@ -447,7 +447,8 @@
               [
                 "#!/bin/bash\n",
                 "cd /home/ubuntu\n",
-                "mkdir config && cd config",
+                "mkdir config\n",
+                "cd config\n",
                 "touch config.json\n",
                 "echo { >> config.json\n",
                 "echo '\"development\"': { >> config.json\n",
@@ -505,8 +506,7 @@
             }
           ]
         }
-      },
-      "DeletionPolicy": "Retain"
+      }
     }
   },
   "Outputs": {
