@@ -96,6 +96,16 @@
       "Type": "String",
       "Description": "Key name for EC2 Instance"
     },
+    "EC2RoleName": {
+      "Type": "String",
+      "Default": "EC2-CSYE6225",
+      "Description": "EC2 Role name"
+    },
+    "EC2S3RolePolicyName": {
+      "Type": "String",
+      "Default": "WebAppS3",
+      "Description": "EC2 policy name"
+    },
     "AmiId": {
       "Type": "String",
       "Description": "AMI Id"
@@ -400,7 +410,7 @@
       "Type": "AWS::IAM::InstanceProfile",
       "Properties": {
         "Path": "/",
-        "Roles": ["EC2-CSYE6225"]
+        "Roles": [{ "Ref": "ECS3IAMRole" }]
       }
     },
     "EC2Instance": {
@@ -447,7 +457,8 @@
               [
                 "#!/bin/bash\n",
                 "cd /home/ubuntu\n",
-                "mkdir config && cd config",
+                "mkdir config\n",
+                "cd config\n",
                 "touch config.json\n",
                 "echo { >> config.json\n",
                 "echo '\"development\"': { >> config.json\n",
@@ -481,9 +492,77 @@
         }
       }
     },
+    "ECS3IAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Ref": "EC2RoleName"
+        },
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": ["ec2.amazonaws.com"]
+              },
+              "Action": ["sts:AssumeRole"]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "EC2S3RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "DependsOn": "S3Bucket",
+      "Properties": {
+        "PolicyName": {
+          "Ref": "EC2S3RolePolicyName"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": ["s3:GetObject", "s3:DeleteObject", "s3:PutObject"],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "S3Bucket"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "S3Bucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "ECS3IAMRole"
+          }
+        ]
+      }
+    },
     "S3Bucket": {
       "Type": "AWS::S3::Bucket",
       "Properties": {
+        "AccessControl": "Private",
         "LifecycleConfiguration": {
           "Rules": [
             {
@@ -505,8 +584,7 @@
             }
           ]
         }
-      },
-      "DeletionPolicy": "Retain"
+      }
     }
   },
   "Outputs": {
