@@ -173,6 +173,14 @@
     "HostedDomainName": {
       "Type": "String",
       "Description": "Hosted Zone Name"
+    },
+    "SNSTopic": {
+      "Type": "String",
+      "Description": "SNS topic name"
+    },
+    "FROM_ADD": {
+      "Type": "String",
+      "Description": "MAIL FROM address"
     }
   },
   "Resources": {
@@ -391,6 +399,14 @@
           },
           {
             "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "SourceSecurityGroupId": {
+              "Ref": "AppLoadBalancerSecurityGroup"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
             "FromPort": 3000,
             "ToPort": 3000,
             "SourceSecurityGroupId": {
@@ -563,7 +579,23 @@
                 {
                   "Ref": "S3Bucket"
                 },
-                "\"'} >> s3_bucket.json"
+                "\"'} >> s3_bucket.json\n",
+                "touch sns_config.json\n",
+                "echo { '\"topic_arn\"': '\"",
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:sns:us-east-1:",
+                      {
+                        "Ref": "AccountId"
+                      },
+                      ":",
+                      { "Ref": "SNSTopic" }
+                    ]
+                  ]
+                },
+                "\"'} >> sns_config.json"
               ]
             ]
           }
@@ -825,7 +857,8 @@
           ]
         },
         "ManagedPolicyArns": [
-          "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+          "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+          "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
         ],
         "Path": "/"
       }
@@ -1081,6 +1114,117 @@
             }
           }
         ]
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "LambdaRole",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": ["lambda.amazonaws.com"]
+              },
+              "Action": ["sts:AssumeRole"]
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+          "arn:aws:iam::aws:policy/AmazonSNSFullAccess",
+          "arn:aws:iam::aws:policy/AmazonSESFullAccess",
+          "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+        ]
+      }
+    },
+    "SNS": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "TopicName": {
+          "Ref": "SNSTopic"
+        },
+        "Subscription": [
+          {
+            "Endpoint": {
+              "Fn::GetAtt": ["LambdaEmailFunction", "Arn"]
+            },
+            "Protocol": "lambda"
+          }
+        ]
+      }
+    },
+    "LambdaResourcePolicy": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaEmailFunction" },
+        "Principal": "sns.amazonaws.com",
+        "Action": "lambda:InvokeFunction",
+        "SourceArn": {
+          "Ref": "SNS"
+        }
+      }
+    },
+    "LambdaEmailFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "index.handler",
+        "Role": { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"] },
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "\n",
+              [
+                "console.log(\"Invoking Lambda Function\");",
+                "exports.handler = function(event, context, callback) {",
+                "  let message = event.Records[0].Sns.Message;",
+                "  console.log(\"Message received from SNS:\", message);",
+                "  callback(null, \"Success\");",
+                "};"
+              ]
+            ]
+          }
+        },
+        "Runtime": "nodejs12.x",
+        "FunctionName": "EmailSender",
+        "MemorySize": 256,
+        "Timeout": 180
+      }
+    },
+    "DynamoDB": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "emaildata",
+        "Environment": {
+          "Variables": {
+            "domain_name": {
+              "Ref": "FROM_ADD"
+            }
+          }
+        },
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": "5",
+          "WriteCapacityUnits": "5"
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "TTL",
+          "Enabled": "true"
+        }
       }
     }
   },
