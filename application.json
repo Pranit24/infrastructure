@@ -178,7 +178,7 @@
       "Type": "String",
       "Description": "SNS topic name"
     },
-    "FROM_ADD": {
+    "FromAddress": {
       "Type": "String",
       "Description": "MAIL FROM address"
     }
@@ -988,6 +988,16 @@
                   ]
                 }
               ]
+            },
+            {
+              "Action": [
+                "lambda:UpdateFunctionCode",
+                "lambda:GetFunction",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:GetFunctionConfiguration"
+              ],
+              "Resource": ["*"],
+              "Effect": "Allow"
             }
           ]
         },
@@ -1172,6 +1182,13 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Handler": "index.handler",
+        "Environment": {
+          "Variables": {
+            "domain_name": {
+              "Ref": "FromAddress"
+            }
+          }
+        },
         "Role": { "Fn::GetAtt": ["LambdaExecutionRole", "Arn"] },
         "Code": {
           "ZipFile": {
@@ -1198,13 +1215,6 @@
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
         "TableName": "emaildata",
-        "Environment": {
-          "Variables": {
-            "domain_name": {
-              "Ref": "FROM_ADD"
-            }
-          }
-        },
         "AttributeDefinitions": [
           {
             "AttributeName": "id",
