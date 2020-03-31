@@ -595,12 +595,12 @@
                     ]
                   ]
                 },
-                "\"', >> sns_config.json\n",
+                "\"', >> sns_sqs_config.json\n",
                 "echo '\"sqs_url\"': '\"",
                 {
                   "Ref": "MyQueue"
                 },
-                "\"'} >> config.json\n"
+                "\"'} >> sns_sqs_config.json\n"
               ]
             ]
           }
@@ -1060,6 +1060,13 @@
         "ComputePlatform": {
           "Ref": "CodeDeployApplicationComputePlatform"
         }
+      }
+    },
+    "CodeDeployLambdaApplication": {
+      "Type": "AWS::CodeDeploy::Application",
+      "Properties": {
+        "ApplicationName": "LambdaApplication",
+        "ComputePlatform": "Lambda"
       }
     },
     "CodeDeployDeploymentGroup": {
