@@ -1062,13 +1062,6 @@
         }
       }
     },
-    "CodeDeployLambdaApplication": {
-      "Type": "AWS::CodeDeploy::Application",
-      "Properties": {
-        "ApplicationName": "LambdaApplication",
-        "ComputePlatform": "Lambda"
-      }
-    },
     "CodeDeployDeploymentGroup": {
       "Type": "AWS::CodeDeploy::DeploymentGroup",
       "Properties": {
