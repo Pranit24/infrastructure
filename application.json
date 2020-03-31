@@ -580,7 +580,7 @@
                   "Ref": "S3Bucket"
                 },
                 "\"'} >> s3_bucket.json\n",
-                "touch sns_config.json\n",
+                "touch sns_sqs_config.json\n",
                 "echo { '\"topic_arn\"': '\"",
                 {
                   "Fn::Join": [
@@ -595,7 +595,12 @@
                     ]
                   ]
                 },
-                "\"'} >> sns_config.json"
+                "\"', >> sns_config.json\n",
+                "echo '\"sqs_url\"': '\"",
+                {
+                  "Ref": "MyQueue"
+                },
+                "\"'} >> config.json\n"
               ]
             ]
           }
@@ -833,6 +838,15 @@
                   ]
                 }
               ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "sqs:DeleteMessage",
+                "sqs:ReceiveMessage",
+                "sqs:SendMessage"
+              ],
+              "Resource": "*"
             }
           ]
         },
@@ -907,6 +921,12 @@
             "Ref": "CircleCiUser"
           }
         ]
+      }
+    },
+    "MyQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "EmailQueue"
       }
     },
     "CircleCICodeDeployPolicy": {
