@@ -181,6 +181,10 @@
     "FromAddress": {
       "Type": "String",
       "Description": "MAIL FROM address"
+    },
+    "CertificateARN": {
+      "Type": "String",
+      "Description": "SSL certificate ARN"
     }
   },
   "Resources": {
@@ -383,30 +387,6 @@
         "SecurityGroupIngress": [
           {
             "IpProtocol": "tcp",
-            "FromPort": 80,
-            "ToPort": 80,
-            "SourceSecurityGroupId": {
-              "Ref": "AppLoadBalancerSecurityGroup"
-            }
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": 443,
-            "ToPort": 443,
-            "SourceSecurityGroupId": {
-              "Ref": "AppLoadBalancerSecurityGroup"
-            }
-          },
-          {
-            "IpProtocol": "tcp",
-            "FromPort": 443,
-            "ToPort": 443,
-            "SourceSecurityGroupId": {
-              "Ref": "AppLoadBalancerSecurityGroup"
-            }
-          },
-          {
-            "IpProtocol": "tcp",
             "FromPort": 3000,
             "ToPort": 3000,
             "SourceSecurityGroupId": {
@@ -422,12 +402,6 @@
         "GroupDescription": "Allow HTTP and HTTPS connection to loadbalancer",
         "VpcId": { "Ref": "VPC" },
         "SecurityGroupIngress": [
-          {
-            "IpProtocol": "tcp",
-            "FromPort": 80,
-            "ToPort": 80,
-            "CidrIp": "0.0.0.0/0"
-          },
           {
             "IpProtocol": "tcp",
             "FromPort": 443,
@@ -499,6 +473,7 @@
         "DBSubnetGroupName": {
           "Ref": "DbSubnetGroup"
         },
+        "StorageEncrypted": "true",
         "PubliclyAccessible": "false",
         "VPCSecurityGroups": [
           {
@@ -727,6 +702,13 @@
     "AppLoadBalancerListener": {
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
       "Properties": {
+        "Certificates": [
+          {
+            "CertificateArn": {
+              "Ref": "CertificateARN"
+            }
+          }
+        ],
         "DefaultActions": [
           {
             "Type": "forward",
@@ -738,8 +720,19 @@
         "LoadBalancerArn": {
           "Ref": "AppLoadBalancer"
         },
-        "Port": 80,
-        "Protocol": "HTTP"
+        "Port": 443,
+        "Protocol": "HTTPS"
+      }
+    },
+    "AppLoadBalancerCerificate": {
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerCertificate",
+      "Properties": {
+        "Certificates": [
+          {
+            "CertificateArn": { "Ref": "CertificateARN" }
+          }
+        ],
+        "ListenerArn": { "Ref": "AppLoadBalancerListener" }
       }
     },
     "AppLoadBalancerTargetGroup": {
