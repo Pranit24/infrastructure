@@ -491,7 +491,7 @@
     },
     "AutoScalingLaunchConfig": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
-      "DependsOn": "RDSDb",
+      "DependsOn": ["RDSDb", "ApplicationSecurityGroup"],
       "Properties": {
         "ImageId": {
           "Ref": "AmiId"
