@@ -18,6 +18,10 @@ aws cloudformation create-stack \
   --template-body file://networking.json --profile user
 ```
 
+## Create certificate on AWS
+
+aws iam upload-server-certificate --server-certificate-name prod_pranitshetty_me.crt --certificate-body file://certificate --private-key file://private-key.pem --certificate-chain file://prod_pranitshetty_me.ca-bundle
+
 ## Parameters
 
 - EnvironmentName \
@@ -41,16 +45,16 @@ aws cloudformation create-stack \
 ```
 
 - PublicSubnet1CIDR\
-IP range (CIDR notation) for the public subnet in the first  Availability Zone
+  IP range (CIDR notation) for the public subnet in the first Availability Zone
 
 - PublicSubnet2CIDR\
-IP range (CIDR notation) for the public subnet in the sceond  Availability Zone
+  IP range (CIDR notation) for the public subnet in the sceond Availability Zone
 
 - PublicSubnet3CIDR\
-IP range (CIDR notation) for the public subnet in the third
+  IP range (CIDR notation) for the public subnet in the third
 
 - AvailabilityZones \
-Comma delimited list of availability zones. MAX 3
+  Comma delimited list of availability zones. MAX 3
 
 JSON file for parameters
 
@@ -58,27 +62,27 @@ JSON file for parameters
 [
   {
     ParameterKey: "EnvironmentName",
-    ParameterValue: "Networking VPC"
+    ParameterValue: "Networking VPC",
   },
   {
     ParameterKey: "VpcCIDR",
-    ParameterValue: "*.*.*.*/16"
+    ParameterValue: "*.*.*.*/16",
   },
   {
     ParameterKey: "PublicSubnet1CIDR",
-    ParameterValue: "*.*.*.*/24"
+    ParameterValue: "*.*.*.*/24",
   },
   {
     ParameterKey: "PublicSubnet2CIDR",
-    ParameterValue: "*.*.*.*/24"
+    ParameterValue: "*.*.*.*/24",
   },
   {
     ParameterKey: "PublicSubnet3CIDR",
-    ParameterValue: "*.*.*.*/24"
+    ParameterValue: "*.*.*.*/24",
   },
   {
     ParameterKey: "AvailabilityZones",
-    ParameterValue: "region_1,region_2,region_3"
-  }
+    ParameterValue: "region_1,region_2,region_3",
+  },
 ];
 ```
