@@ -442,9 +442,18 @@
         ]
       }
     },
+    "DBParameter": {
+      "Type": "AWS::RDS::DBParameterGroup",
+      "Properties": {
+        "Description": "Enables Performance insight for RDS DB",
+        "Family": "mysql8.0",
+        "Parameters": { "performance_schema": 1 }
+      }
+    },
     "RDSDb": {
       "Type": "AWS::RDS::DBInstance",
       "Properties": {
+        "DBParameterGroupName": { "Ref": "DBParameter" },
         "DBInstanceIdentifier": {
           "Ref": "DBIdentifier"
         },
